@@ -17,11 +17,19 @@ clock = pygame.time.Clock()
 
 
 class Cell:
-    def __init__(self, surface, index):
+    def __init__(self, game, surface):
+        self.game = game
         self.selected = False
         self.surface = surface
-        self.index = index
-        self.rect = None
+        self.order = 0
+        self.index = 0
+    
+    @property
+    def rect(self) -> pygame.rect.Rect:
+        row, col = divmod(self.index, self.game.mode)
+        left = col * self.game.cell_width
+        top = row * self.game.cell_height
+        return pygame.rect.Rect(left, top, self.game.cell_width, self.game.cell_height)
 
 
 class PuzzleGame:
@@ -78,19 +86,17 @@ class PuzzleGame:
             top = row * game.cell_height
             original_rect = pygame.rect.Rect(left, top, self.cell_width, self.cell_height)
             sub_surface = self.bg.subsurface(original_rect)
-            self.cells.append(Cell(sub_surface, i))
+            cell = Cell(self, sub_surface)
+            cell.order = i
+            self.cells.append(cell)
 
         # 打乱顺序
         random.shuffle(self.cells)
+        # 复赋值新的位置索引
+        for i, cell in enumerate(self.cells):
+            cell.index = i
 
-        # 存储新位置
-        for i, cell in enumerate(game.cells):
-            row, col = divmod(i, self.mode)
-            left = col * game.cell_width
-            top = row * game.cell_height
-            cell.rect = pygame.rect.Rect(left, top, game.cell_width, game.cell_height)
-
-    def get_cell_by_mouse_pos(self, pos):
+    def get_cell_by_mouse_pos(self, pos) -> Cell: # type: ignore
         for cell in self.cells:
             if cell.rect.collidepoint(pos):
                 return cell
@@ -111,19 +117,22 @@ class PuzzleGame:
             self.selected_cell = cell
         else:
             current_cell = cell
-            if current_cell.rect == self.selected_cell.rect:
+            if current_cell == self.selected_cell:
                 pass
             if self.check_swap(current_cell, self.selected_cell):
                 # 交换位置
-                current_cell.rect, self.selected_cell.rect = self.selected_cell.rect, current_cell.rect
+                current_cell.index, self.selected_cell.index = self.selected_cell.index, current_cell.index
+                self.cells[current_cell.index] = current_cell
+                self.cells[self.selected_cell.index] = self.selected_cell
+
                 self.selected_cell.selected = False
                 self.selected_cell = None
                 self.check_success()
 
     def check_success(self):
         success = True
-        for i, cell in enumerate(self.cells):
-            if i != cell.index:
+        for  cell in self.cells:
+            if cell.index != cell.order:
                 success = False
         if success:
             self.status = STATUS_OVER
@@ -156,10 +165,11 @@ while True:
     elif game.status == STATUS_MAIN:
         screen.fill("black")
         for cell in game.cells:
-            screen.blit(cell.surface, cell.rect)
+            rect = cell.rect
+            screen.blit(cell.surface, rect)
             color = "red" if cell.selected else "white"
             width = 5 if cell.selected else 1
-            pygame.draw.rect(screen, color, cell.rect, width)
+            pygame.draw.rect(screen, color, rect, width)
     elif game.status == STATUS_OVER:
         # todo: success page
         print("success")
