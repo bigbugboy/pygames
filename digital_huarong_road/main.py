@@ -7,7 +7,7 @@ import pygame
 6x6的数字华容道
 """
 
-MODE = 6
+MODE = 4
 CELL_SIZE = 100
 SIZE = WIDTH, HEIGHT = MODE * CELL_SIZE, MODE * CELL_SIZE
 
@@ -19,6 +19,8 @@ pygame.display.set_caption("数字华容道")
 clock = pygame.time.Clock()
 
 FONT = pygame.font.Font(None, 50)
+
+blocks = []
 
 
 class Block:
@@ -97,8 +99,13 @@ class Block:
                 return
 
 
-blocks = [Block(i + 1) for i in range(MODE*MODE)]   # range(36)
-Block.shuffle(blocks[:-1])      # note 为了方便移动位置，和36空白位置作比较做标识
+def init_blocks():
+    global blocks
+    blocks = [Block(i + 1) for i in range(MODE * MODE)]  # range(36)
+    Block.shuffle(blocks[:-1])  # note 为了方便移动位置，和36空白位置作比较做标识
+    while all([b.no == b.index + 1 for b in blocks]):
+        # 避免打乱的顺序，碰巧还是原来的顺序，导致游戏开始就game over.
+        Block.shuffle(blocks[:-1])
 
 
 def draw_grid():
@@ -110,23 +117,37 @@ def draw_grid():
         pygame.draw.line(screen, "black", (pos_x, 0), (pos_x, HEIGHT))
 
 
+game_over = False
+init_blocks()
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             quit()
-        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+        if not game_over and event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             for b in blocks:
                 if b.rect.collidepoint(*mouse_pos):
                     b.try_move()
                     break   # note 需要break，因为交换两个方块，着急需要判断一个就好了
+        if not game_over and event.type == pygame.KEYUP and event.key == pygame.K_r:
+            # 刷新游戏
+            init_blocks()
 
     screen.fill("white")
     # draw_grid()
 
     for b in blocks:
         b.draw()
+
+    # 判断游戏是否结束
+    game_over = all([b.no == b.index + 1 for b in blocks])
+    if game_over:
+        over_text = FONT.render("Success", True, "black")
+        rect = over_text.get_rect(center=(WIDTH//2, HEIGHT//2))
+        pygame.draw.rect(screen, "red", rect)
+        screen.blit(over_text, rect)
 
     pygame.display.flip()
     clock.tick(60)
