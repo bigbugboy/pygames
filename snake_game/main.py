@@ -203,7 +203,7 @@ while True:
     game.check_overlap()    # check it or not depend on yourself
 
     screen.fill("white")
-    game.draw_glass()
+    game.draw_grass()
     game.food.draw()
     game.snake.draw()
 
