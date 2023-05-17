@@ -54,13 +54,46 @@ class Block:
         pygame.draw.rect(screen, "orange", self.rect, 1)
 
     def try_move(self):
+        # 尝试向下移动
         to_down_index = self.index + 6
-        blank_block = blocks[to_down_index]
-        if to_down_index <= 35 and blank_block.no == 36:
-            print(self.index, to_down_index)
-            self.index, blank_block.index = blank_block.index, self.index
-            self.init_pos()
-            blank_block.init_pos()
+        if to_down_index <= 35:
+            _block = blocks[to_down_index]
+            if _block.no == 36:
+                blocks[self.index], blocks[to_down_index] = blocks[to_down_index], blocks[self.index]
+                self.index, _block.index = _block.index, self.index
+                self.init_pos()
+                _block.init_pos()
+                return
+        # 尝试向上移动
+        to_up_index = self.index - 6
+        if to_up_index >= 0:
+            _block = blocks[to_up_index]
+            if _block.no == 36:
+                blocks[self.index], blocks[to_up_index] = blocks[to_up_index], blocks[self.index]
+                self.index, _block.index = _block.index, self.index
+                self.init_pos()
+                _block.init_pos()
+                return
+        # 尝试向右移动
+        to_right_index = self.index + 1
+        if self.index not in [5, 11, 17, 23, 29, 35] and to_right_index <= 35:
+            _block = blocks[to_right_index]
+            if _block.no == 36:
+                blocks[self.index], blocks[to_right_index] = blocks[to_right_index], blocks[self.index]
+                self.index, _block.index = _block.index, self.index
+                self.init_pos()
+                _block.init_pos()
+                return
+        # 尝试向左移动
+        to_left_index = self.index - 1
+        if self.index not in [0, 6, 12, 18, 24, 30] and to_left_index >= 0:
+            _block = blocks[to_left_index]
+            if _block.no == 36:
+                blocks[self.index], blocks[to_left_index] = blocks[to_left_index], blocks[self.index]
+                self.index, _block.index = _block.index, self.index
+                self.init_pos()
+                _block.init_pos()
+                return
 
 
 blocks = [Block(i + 1) for i in range(36)]
@@ -86,6 +119,7 @@ while True:
             for b in blocks:
                 if b.rect.collidepoint(*mouse_pos):
                     b.try_move()
+                    break   # note 需要break，因为交换两个方块，着急需要判断一个就好了
 
     screen.fill("white")
     # draw_grid()
