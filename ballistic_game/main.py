@@ -2,6 +2,7 @@ import pygame, sys
 from pygame.locals import *
 from math import *
 
+
 def rot_center(image, angle):
     """rotate an image while keeping its center and size"""
     orig_rect = image.get_rect()
@@ -10,6 +11,7 @@ def rot_center(image, angle):
     rot_rect.center = rot_image.get_rect().center
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
+
 
 pygame.init()
 
@@ -63,7 +65,7 @@ while True:
         if s[1] >= 486: # if hit the ground
             launched = False
 
-    #  set informations to print
+    #  set information to print
     font = pygame.font.Font(None, 30)
 
     text_ang = font.render("angle = %d" % ang, 1, (10, 10, 10))
@@ -86,7 +88,6 @@ while True:
 
     text_t = font.render("t = %.1f s" % t, 1, (10, 10, 10))
     text_t_pos = (0, 660)
-
 
     # blit the new scene
     DISPLAYSURF.blit(backgroundImg, (0,0))
