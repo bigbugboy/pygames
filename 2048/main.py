@@ -33,6 +33,7 @@ COLORS = {
 board_values = [[0 for _ in range(4)] for _ in range(4)]
 new_piece = True
 piece_count = 0  # 方块数量
+DIRECTION = ""
 
 
 # 画游戏主背景板
@@ -75,12 +76,54 @@ def gen_new_piece(board):
     return board
 
 
+# 2048的核心逻辑
+# 改变方向后处理方块的移动与合并
+def take_turn(direction, board):
+    merged = [[False for _ in range(4)] for _ in range(4)]
+    if direction == "UP":
+        for i in range(1, 4):
+            for j in range(4):
+                shift = 0
+                # 从第2行开始判断向上移动的距离
+                for q in range(i):
+                    if board[q][j] == 0:
+                        shift += 1
+                if shift > 0:
+                    # 将数字移动到新位置，并清空原位置上的数字
+                    board[i - shift][j] = board[i][j]
+                    board[i][j] = 0
+                if i - shift - 1 >= 0 and board[i - shift - 1][j] == board[i - shift][j]:
+                    if not merged[i - shift - 1][j] and not merged[i - shift][j]:
+                        # 如果移动后位置上的数字和它上面的数字一样，并且都没有被合并过，则可以合并
+                        # 上面位置的数字*2， 该位置数字清空为0， 上面的位置merge=True
+                        board[i - shift - 1][j] *= 2
+                        board[i - shift][j] = 0
+                        merged[i - shift - 1][j] = True
+
+    elif direction == "DOWN":
+        pass
+
+    elif direction == "LEFT":
+        pass
+    elif direction == "RIGHT":
+        pass
+
+
 while True:
     clock.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit(-1)
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_UP:
+                DIRECTION = "UP"
+            elif event.key == pygame.K_DOWN:
+                DIRECTION = "DOWN"
+            elif event.key == pygame.K_LEFT:
+                DIRECTION = "LEFT"
+            elif event.key == pygame.K_RIGHT:
+                DIRECTION = "RIGHT"
 
     screen.fill("grey")
     draw_board()
@@ -90,5 +133,10 @@ while True:
         gen_new_piece(board_values)
         new_piece = False
         piece_count += 1
+
+    if DIRECTION != "":
+        take_turn(DIRECTION, board_values)
+        new_piece = True
+        DIRECTION = ""
 
     pygame.display.flip()
