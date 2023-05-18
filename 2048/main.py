@@ -31,6 +31,8 @@ COLORS = {
 
 # game variables init
 board_values = [[0 for _ in range(4)] for _ in range(4)]
+new_piece = True
+piece_count = 0  # 方块数量
 
 
 # 画游戏主背景板
@@ -56,6 +58,23 @@ def draw_pieces(board):
                 screen.blit(value_text, value_rect)     # 画方块上的数字
 
 
+# 生成新的方块
+def gen_new_piece(board):
+    # 只要有位置是0就可以生成新方块，方块值在2和4之间随机，2的概率9/10, 4的概率1/10
+    # 每次至多生成一个方块
+    while any([0 in row for row in board]):
+        row = random.randint(0, 3)
+        col = random.randint(0, 3)
+        if board[row][col] == 0:
+            if random.randint(1, 10) == 10:
+                board[row][col] = 4
+            else:
+                board[row][col] = 2
+            break
+
+    return board
+
+
 while True:
     clock.tick(60)
     for event in pygame.event.get():
@@ -66,4 +85,10 @@ while True:
     screen.fill("grey")
     draw_board()
     draw_pieces(board_values)
+
+    if new_piece or piece_count < 2:
+        gen_new_piece(board_values)
+        new_piece = False
+        piece_count += 1
+
     pygame.display.flip()
