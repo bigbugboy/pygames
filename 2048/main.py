@@ -101,12 +101,52 @@ def take_turn(direction, board):
                         merged[i - shift - 1][j] = True
 
     elif direction == "DOWN":
-        pass
+        for i in range(2, -1, -1):  # [2, 1, 0]
+            for j in range(4):
+                shift = 0
+                for q in range(i + 1, 4):   # 向下判断
+                    if board[q][j] == 0:
+                        shift += 1
+                if shift > 0:
+                    board[i + shift][j] = board[i][j]
+                    board[i][j] = 0
+                if i + shift + 1 <= 3 and board[i + shift + 1][j] == board[i + shift][j]:
+                    if not merged[i + shift + 1][j] and not merged[i + shift][j]:
+                        board[i + shift + 1][j] *= 2
+                        board[i + shift][j] = 0
+                        merged[i + shift + 1][j] = True
 
     elif direction == "LEFT":
-        pass
+        for i in range(4):
+            for j in range(1, 4):
+                shift = 0
+                for q in range(j):
+                    if board[i][q] == 0:
+                        shift += 1
+                if shift > 0:
+                    board[i][j - shift] = board[i][j]
+                    board[i][j] = 0
+                if j - shift - 1 >= 0 and board[i][j - shift - 1] == board[i][j - shift]:
+                    if not merged[i][j - shift - 1] and not merged[i][j - shift]:
+                        board[i][j - shift - 1] *= 2
+                        board[i][j - shift] = 0
+                        merged[i][j - shift - 1] = True
+
     elif direction == "RIGHT":
-        pass
+        for i in range(4):
+            for j in range(2, -1, -1):  # [2, 1, 0]
+                shift = 0
+                for q in range(j + 1, 4):
+                    if board[i][q] == 0:
+                        shift += 1
+                if shift > 0:
+                    board[i][j + shift] = board[i][j]
+                    board[i][j] = 0
+                if j + shift + 1 <= 3 and board[i][j + shift + 1] == board[i][j + shift]:
+                    if not merged[i][j + shift + 1] and not merged[i][j + shift]:
+                        board[i][j + shift + 1] *= 2
+                        board[i][j + shift] = 0
+                        merged[i][j + shift + 1] = True
 
 
 while True:
