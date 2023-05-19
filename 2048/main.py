@@ -34,11 +34,25 @@ board_values = [[0 for _ in range(4)] for _ in range(4)]
 new_piece = True
 piece_count = 0  # 方块数量
 DIRECTION = ""
+font = pygame.font.Font(None, 40)
+game_over = False
+score = 0
+high_score = 0
+try:
+    f = open("high_score.txt", "r")
+    high_score = int(f.readline())
+    f.close()
+except Exception:
+    pass
 
 
 # 画游戏主背景板
 def draw_board():
     pygame.draw.rect(screen, COLORS["bg"], [0, 0, 400, 400], 0, 10)
+    score_text = font.render(f'Score: {score}', True, 'black')
+    high_score_text = font.render(f'High Score: {high_score}', True, 'black')
+    screen.blit(score_text, (10, 410))
+    screen.blit(high_score_text, (10, 450))
 
 
 # 画游戏面板上的方块
@@ -63,6 +77,7 @@ def draw_pieces(board):
 def gen_new_piece(board):
     # 只要有位置是0就可以生成新方块，方块值在2和4之间随机，2的概率9/10, 4的概率1/10
     # 每次至多生成一个方块
+    global game_over
     while any([0 in row for row in board]):
         row = random.randint(0, 3)
         col = random.randint(0, 3)
@@ -72,6 +87,8 @@ def gen_new_piece(board):
             else:
                 board[row][col] = 2
             break
+    else:
+        game_over = True
 
     return board
 
@@ -99,6 +116,7 @@ def take_turn(direction, board):
                         board[i - shift - 1][j] *= 2
                         board[i - shift][j] = 0
                         merged[i - shift - 1][j] = True
+                        increase_score(board[i - shift - 1][j])
 
     elif direction == "DOWN":
         for i in range(2, -1, -1):  # [2, 1, 0]
@@ -115,6 +133,7 @@ def take_turn(direction, board):
                         board[i + shift + 1][j] *= 2
                         board[i + shift][j] = 0
                         merged[i + shift + 1][j] = True
+                        increase_score(board[i + shift + 1][j])
 
     elif direction == "LEFT":
         for i in range(4):
@@ -131,6 +150,7 @@ def take_turn(direction, board):
                         board[i][j - shift - 1] *= 2
                         board[i][j - shift] = 0
                         merged[i][j - shift - 1] = True
+                        increase_score(board[i][j - shift - 1])
 
     elif direction == "RIGHT":
         for i in range(4):
@@ -147,15 +167,35 @@ def take_turn(direction, board):
                         board[i][j + shift + 1] *= 2
                         board[i][j + shift] = 0
                         merged[i][j + shift + 1] = True
+                        increase_score(board[i][j + shift + 1])
+
+
+def increase_score(inc):
+    global score
+    score += inc
+
+
+def draw_game_over():
+    pygame.draw.rect(screen, 'black', [25, 50, 350, 100], 0, 10)
+    game_over_text1 = font.render('Game Over!', True, 'white')
+    game_over_text2 = font.render('Press Enter to Restart', True, 'white')
+    screen.blit(game_over_text1, (130, 65))
+    screen.blit(game_over_text2, (70, 105))
+
+
+def save_high_score():
+    with open("high_score.txt", "w") as f:
+        f.write(str(high_score))
 
 
 while True:
     clock.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            save_high_score()
             pygame.quit()
             sys.exit(-1)
-        if event.type == pygame.KEYUP:
+        if not game_over and event.type == pygame.KEYUP:
             if event.key == pygame.K_UP:
                 DIRECTION = "UP"
             elif event.key == pygame.K_DOWN:
@@ -164,6 +204,15 @@ while True:
                 DIRECTION = "LEFT"
             elif event.key == pygame.K_RIGHT:
                 DIRECTION = "RIGHT"
+
+        if game_over and event.key == pygame.K_RETURN:
+            game_over = False
+            new_piece = True
+            score = 0
+            board_values = [[0 for _ in range(4)] for _ in range(4)]
+            piece_count = 0  # 方块数量
+            DIRECTION = ""
+            save_high_score()
 
     screen.fill("grey")
     draw_board()
@@ -174,9 +223,15 @@ while True:
         new_piece = False
         piece_count += 1
 
+    if game_over:
+        draw_game_over()
+
     if DIRECTION != "":
         take_turn(DIRECTION, board_values)
         new_piece = True
         DIRECTION = ""
+
+    if score > high_score:
+        high_score = score
 
     pygame.display.flip()
