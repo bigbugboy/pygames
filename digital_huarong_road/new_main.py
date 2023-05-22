@@ -72,9 +72,37 @@ class Block:
                 _block.init_pos()
                 return
         # 尝试向上移动
+        to_up_index = self.index - MODE
+        if to_up_index >= 0:
+            _block = blocks[to_up_index]
+            if _block.value == MODE * MODE:
+                blocks[self.index], blocks[to_up_index] = blocks[to_up_index], blocks[self.index]
+                self.index, _block.index = _block.index, self.index
+                self.init_pos()
+                _block.init_pos()
+                return
         # 尝试向右移动
+        to_right_index = self.index + 1
+        # if self.index not in [5, 11, 17, 23, 29, 35]
+        if self.index not in list(range(MODE - 1, MODE*MODE, MODE)):
+            _block = blocks[to_right_index]
+            if _block.value == MODE * MODE:
+                blocks[self.index], blocks[to_right_index] = blocks[to_right_index], blocks[self.index]
+                self.index, _block.index = _block.index, self.index
+                self.init_pos()
+                _block.init_pos()
+                return
         # 尝试向左移动
-        pass
+        to_left_index = self.index - 1
+        # if self.index not in [0, 6, 12, 18, 24, 30]
+        if self.index not in list(range(0, MODE*MODE, MODE)):
+            _block = blocks[to_left_index]
+            if _block.value == MODE * MODE:
+                blocks[self.index], blocks[to_left_index] = blocks[to_left_index], blocks[self.index]
+                self.index, _block.index = _block.index, self.index
+                self.init_pos()
+                _block.init_pos()
+                return
 
 
 blocks = [Block(i + 1) for i in range(MODE * MODE)]
@@ -91,7 +119,6 @@ while True:
             mouse_pos = pygame.mouse.get_pos()
             for b in blocks:
                 if b.rect.collidepoint(*mouse_pos):
-                    print(b.value)
                     b.try_move()
 
     screen.fill("white")
