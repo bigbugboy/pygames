@@ -40,8 +40,8 @@ class PuzzleGame:
 
     def __init__(self):
         self.status = STATUS_INIT
-        self.font_title = pygame.font.Font('Hello Avocado.ttf', 64)
-        self.font_content = pygame.font.Font('Hello Avocado.ttf', 40)
+        self.font_title = pygame.font.Font('avocado.ttf', 64)
+        self.font_content = pygame.font.Font('avocado.ttf', 40)
         self.init_text()
         self.bg = pygame.image.load("./elephant.jpg").convert()
 
