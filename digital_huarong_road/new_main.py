@@ -13,6 +13,7 @@ pygame.display.set_caption("数字华容道")
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 clock = pygame.time.Clock()
 fps = 60
+font = pygame.font.Font(None, 50)
 
 
 def draw_grid():
@@ -36,6 +37,11 @@ class Block:
             BLOCK_SIZE // 2 + self.col * BLOCK_SIZE,
             BLOCK_SIZE // 2 + self.row * BLOCK_SIZE
         ))
+        self.value_text = font.render(str(self.value), True, "blue")
+        # note 永远都在surf的中心点贴上数字，不随着surf所在位置变化
+        self.surf.blit(self.value_text, self.value_text.get_rect(center=(
+            BLOCK_SIZE // 2, BLOCK_SIZE // 2
+        )))
 
     def draw(self):
         screen.blit(self.surf, self.rect)
