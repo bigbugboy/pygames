@@ -1,3 +1,4 @@
+import random
 import sys
 
 import pygame
@@ -26,10 +27,20 @@ def draw_grid():
         pygame.draw.line(screen, "black", (pos_x, 0), (pos_x, HEIGHT))
 
 
+def shuffle_blocks(bs):
+    random.shuffle(bs)  # 在此处 bs[:-1] 没有效果
+    for i, b in enumerate(bs):
+        b.index = i
+        b.init_pos()
+
+
 class Block:
     def __init__(self, value):
         self.value = value
         self.index = value - 1
+        self.init_pos()
+
+    def init_pos(self):
         self.row, self.col = divmod(self.index, MODE)
         self.surf = pygame.surface.Surface([BLOCK_SIZE, BLOCK_SIZE])
         self.surf.fill("grey")
@@ -44,11 +55,15 @@ class Block:
         )))
 
     def draw(self):
-        screen.blit(self.surf, self.rect)
+        if self.value < MODE * MODE:
+            # 最后一数字空白展示
+            screen.blit(self.surf, self.rect)
         pygame.draw.rect(screen, "orange", self.rect, 1)
 
 
 blocks = [Block(i + 1) for i in range(MODE * MODE)]
+
+shuffle_blocks(blocks[:-1])     # 最后一个数字不动
 
 
 while True:
