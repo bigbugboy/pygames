@@ -32,6 +32,9 @@ def shuffle_blocks(bs):
     for i, b in enumerate(bs):
         b.index = i
         b.init_pos()
+    while all([b.no == b.index + 1 for b in bs]):
+        # 避免打乱的顺序，碰巧还是原来的顺序，导致游戏开始就game over.
+        shuffle_blocks(bs)
 
 
 class Block:
@@ -105,6 +108,7 @@ class Block:
                 return
 
 
+game_over = False
 blocks = [Block(i + 1) for i in range(MODE * MODE)]
 
 shuffle_blocks(blocks[:-1])     # 最后一个数字不动
@@ -115,17 +119,30 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit(-1)
-        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+        if not game_over and event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             for b in blocks:
                 if b.rect.collidepoint(*mouse_pos):
                     b.try_move()
+        if game_over and event.type == pygame.KEYUP:
+            # 刷新游戏
+            game_over = False
+            blocks = [Block(i + 1) for i in range(MODE * MODE)]
+            shuffle_blocks(blocks[:-1])
 
     screen.fill("white")
 
     # draw_grid()   # 网格线不是我们想要的，我们想要每个方块有自己的边框
     for b in blocks:
         b.draw()
+
+    # 判断游戏是否结束
+    game_over = all([b.value == b.index + 1 for b in blocks])
+    if game_over:
+        over_text = font.render("Success", True, "black")
+        rect = over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        pygame.draw.rect(screen, "red", rect)
+        screen.blit(over_text, rect)
 
     pygame.display.flip()
     clock.tick(fps)
