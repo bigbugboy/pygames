@@ -60,6 +60,22 @@ class Block:
             screen.blit(self.surf, self.rect)
         pygame.draw.rect(screen, "orange", self.rect, 1)
 
+    def try_move(self):
+        # 尝试向下移动
+        to_down_index = self.index + MODE
+        if to_down_index < MODE * MODE:
+            _block = blocks[to_down_index]
+            if _block.value == MODE * MODE:
+                blocks[self.index], blocks[to_down_index] = blocks[to_down_index], blocks[self.index]
+                self.index, _block.index = _block.index, self.index
+                self.init_pos()
+                _block.init_pos()
+                return
+        # 尝试向上移动
+        # 尝试向右移动
+        # 尝试向左移动
+        pass
+
 
 blocks = [Block(i + 1) for i in range(MODE * MODE)]
 
@@ -71,6 +87,12 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit(-1)
+        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            mouse_pos = pygame.mouse.get_pos()
+            for b in blocks:
+                if b.rect.collidepoint(*mouse_pos):
+                    print(b.value)
+                    b.try_move()
 
     screen.fill("white")
 
