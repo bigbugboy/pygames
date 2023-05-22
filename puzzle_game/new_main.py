@@ -1,3 +1,4 @@
+import random
 import sys
 
 import pygame
@@ -17,14 +18,42 @@ fps = 10
 
 image = pygame.image.load("elephant.jpg").convert()
 image_rect = image.get_rect()
-blocks = []
-for i in range(MODE):
-    for j in range(MODE):
-        block_width = WIDTH // MODE
-        block_height = HEIGHT // MODE
-        sub_rect = pygame.rect.Rect(j * block_width, i * block_height, block_width, block_height)
-        block_surf = image.subsurface(sub_rect)
-        blocks.append((block_surf, sub_rect))
+
+
+def shuffle(bs):
+    random.shuffle(bs)
+    for i, b in enumerate(bs):
+        b.index = i
+        b.init_pos()
+
+
+class Block:
+
+    BLOCK_WIDTH = WIDTH // MODE
+    BLOCK_HEIGHT = HEIGHT // MODE
+
+    def __init__(self, no):
+        self.no = no    # 从1开始
+        self.index = no - 1     # 索引值从0开始
+        self.init_pos()
+        self.surf = image.subsurface(self.rect)     # 只能实例化一次
+
+    def init_pos(self):
+        self.row, self.col = divmod(self.index, MODE)
+        self.rect = pygame.rect.Rect(
+            self.col * self.BLOCK_WIDTH,
+            self.row * self.BLOCK_HEIGHT,
+            self.BLOCK_WIDTH,
+            self.BLOCK_HEIGHT
+        )
+
+    def draw(self):
+        screen.blit(self.surf, self.rect)
+        pygame.draw.rect(screen, "blue", self.rect, 1)
+
+
+blocks = [Block(i + 1) for i in range(MODE * MODE)]
+shuffle(blocks)
 
 
 while True:
@@ -34,9 +63,8 @@ while True:
             sys.exit(-1)
 
     # screen.blit(image, (0, 0))
-    for block_surf, block_rect in blocks:
-        screen.blit(block_surf, block_rect)
-        pygame.draw.rect(screen, "blue", block_rect, 1)
+    for block in blocks:
+        block.draw()
 
     pygame.display.flip()
     clock.tick(fps)
