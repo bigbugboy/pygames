@@ -144,6 +144,8 @@ while True:
             screen.blit(b.image, rect)
             if b.selected:
                 pygame.draw.rect(screen, 'red', rect, 2)
+            else:
+                pygame.draw.rect(screen, 'grey', rect, 1)
 
     if game_status == 'OVER':
         draw_game_over()
