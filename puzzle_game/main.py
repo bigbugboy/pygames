@@ -43,7 +43,7 @@ class PuzzleGame:
         self.font_title = pygame.font.Font('avocado.ttf', 64)
         self.font_content = pygame.font.Font('avocado.ttf', 40)
         self.init_text()
-        self.bg = pygame.image.load("./elephant.jpg").convert()
+        self.bg = pygame.image.load("elephant.old.jpg").convert()
 
         self.mode = 0
         self.cells = []

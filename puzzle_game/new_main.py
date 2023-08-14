@@ -18,7 +18,7 @@ screen = pygame.display.set_mode([WIDTH, HEIGHT])
 clock = pygame.time.Clock()
 fps = 10
 
-image = pygame.image.load("elephant.jpg").convert()
+image = pygame.image.load("elephant.old.jpg").convert()
 image_rect = image.get_rect()
 title_font = pygame.font.Font("avocado.ttf", 60)
 content_font = pygame.font.Font("avocado.ttf", 40)

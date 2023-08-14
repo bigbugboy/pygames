@@ -4,16 +4,20 @@ import sys
 import pygame
 
 
-WIDTH = 880
-HEIGHT = 600
+WIDTH = 500
+HEIGHT = 341
 MODE = 3
+STATUS_RUN = 'RUN'
+STATUS_INIT = 'INIT'
+STATUS_OVER = 'OVER'
+
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 picture = pygame.image.load('./elephant.jpg').convert()
-title_font = pygame.font.Font('./avocado.ttf', 60)
-content_font = pygame.font.Font('./avocado.ttf', 40)
+title_font = pygame.font.Font('./avocado.ttf', 40)
+content_font = pygame.font.Font('./avocado.ttf', 30)
 
 
 class Block:
@@ -99,11 +103,11 @@ def init_mode(mode):
     MODE = mode
     blocks = [Block(i) for i in range(MODE * MODE)]
     random.shuffle(blocks)
-    game_status = 'RUN'
+    game_status = STATUS_RUN
 
 
 blocks = []
-game_status = 'INIT'
+game_status = STATUS_INIT
 
 
 while True:
@@ -111,15 +115,15 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if game_status == 'RUN' and event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+        if game_status == STATUS_RUN and event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             selected_block = get_selected_block()
             new_selected_block = get_block_by_mouse_pos(event.pos)
             try_swap(selected_block, new_selected_block)
 
-        if game_status == 'OVER' and event.type == pygame.KEYUP:
-            game_status = 'INIT'
+        if game_status == STATUS_OVER and event.type == pygame.KEYUP:
+            game_status = STATUS_INIT
 
-        if game_status == 'INIT' and event.type == pygame.KEYUP:
+        if game_status == STATUS_INIT and event.type == pygame.KEYUP:
             if event.key == pygame.K_e:
                 init_mode(3)
             elif event.key == pygame.K_m:
@@ -128,17 +132,17 @@ while True:
                 init_mode(5)
 
     # 游戏逻辑
-    if game_status == 'RUN':
+    if game_status == STATUS_RUN:
         success = all([i == b.index for i, b in enumerate(blocks)])
         if success:
-            game_status = 'OVER'
+            game_status = STATUS_OVER
 
     # 画图
     screen.fill('black')
-    if game_status == 'INIT':
+    if game_status == STATUS_INIT:
         draw_init()
 
-    if game_status != 'INIT':
+    if game_status != STATUS_INIT:
         for i, b in enumerate(blocks):
             rect = b.get_rect(i)
             screen.blit(b.image, rect)
@@ -147,7 +151,7 @@ while True:
             else:
                 pygame.draw.rect(screen, 'grey', rect, 1)
 
-    if game_status == 'OVER':
+    if game_status == STATUS_OVER:
         draw_game_over()
 
     pygame.display.flip()

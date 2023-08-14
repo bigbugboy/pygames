@@ -16,7 +16,7 @@ RED = (255, 0, 0)
 CRIMSON = (220, 20, 60)
 ORANGE = (255, 127, 0)
 
-bg = pygame.image.load('elephant.jpg')
+bg = pygame.image.load('elephant.old.jpg')
 bg_rect = bg.get_rect()
 bg_rect.topleft = (0, 0)
 
