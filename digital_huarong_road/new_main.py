@@ -32,7 +32,7 @@ def shuffle_blocks(bs):
     for i, b in enumerate(bs):
         b.index = i
         b.init_pos()
-    while all([b.no == b.index + 1 for b in bs]):
+    while all([b.value == b.index + 1 for b in bs]):
         # 避免打乱的顺序，碰巧还是原来的顺序，导致游戏开始就game over.
         shuffle_blocks(bs)
 
