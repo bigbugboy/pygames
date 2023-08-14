@@ -5,7 +5,7 @@ import pygame
 
 
 WIDTH = 500
-HEIGHT = 341
+HEIGHT = 375
 MODE = 3
 STATUS_RUN = 'RUN'
 STATUS_INIT = 'INIT'
@@ -15,7 +15,7 @@ STATUS_OVER = 'OVER'
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-picture = pygame.image.load('./elephant.jpg').convert()
+picture = pygame.image.load('./dog.jpg').convert()
 title_font = pygame.font.Font('./avocado.ttf', 40)
 content_font = pygame.font.Font('./avocado.ttf', 30)
 
