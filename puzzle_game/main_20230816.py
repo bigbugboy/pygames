@@ -14,6 +14,7 @@ STATUS_OVER = 'OVER'
 pg.init()
 screen = pg.display.set_mode((WIDTH, HEIGHT))
 picture = pg.image.load('./dog.jpg').convert()
+clock = pg.time.Clock()
 title_font = pygame.font.Font('./avocado.ttf', 40)
 content_font = pygame.font.Font('./avocado.ttf', 30)
 
@@ -152,3 +153,4 @@ while True:
         draw_game_over()
 
     pg.display.flip()
+    clock.tick(60)
