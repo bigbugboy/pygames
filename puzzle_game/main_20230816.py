@@ -20,19 +20,20 @@ content_font = pygame.font.Font('./avocado.ttf', 30)
 
 
 class Block:
-    def __init__(self, index):
-        self.index = index
-        self.image = picture.subsurface(self.get_rect(index))
+    def __init__(self, no):
+        self.no = no    # 方块的编号,从1开始
+        self.image = picture.subsurface(self.get_rect(no - 1))
         self.selected = False
 
     def get_rect(self, index):
+        # index的值需要从0开始
         row, col = divmod(index, MODE)
         block_width = int(WIDTH / MODE)
         block_height = int(HEIGHT / MODE)
         return pg.Rect(col * block_width, row * block_height, block_width, block_height)
 
     def __str__(self):
-        return f'index: {self.index}'
+        return f'index: {self.no}'
 
 
 def get_selected_block():
@@ -96,14 +97,14 @@ def draw_init():
 
 
 def success():
-    return all([i == block.index for i, block in enumerate(blocks)])
+    return all([i + 1 == block.no for i, block in enumerate(blocks)])
 
 
 def init_game(mode):
     global MODE, blocks, game_status
 
     MODE = mode
-    blocks = [Block(i) for i in range(MODE * MODE)]
+    blocks = [Block(i + 1) for i in range(MODE * MODE)]
     random.shuffle(blocks)
     while success():
         random.shuffle(blocks)

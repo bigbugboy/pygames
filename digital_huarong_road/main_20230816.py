@@ -21,11 +21,11 @@ font = pg.font.Font(None, 50)
 
 
 class Block:
-    def __init__(self, index):
-        self.index = index
+    def __init__(self, no):
+        self.no = no
         self.image = pg.Surface((BLOCK_SIZE, BLOCK_SIZE))
         self.image.fill(BLOCK_COLOR)
-        _text = font.render(str(self.index + 1), True, NUM_COLOR)
+        _text = font.render(str(self.no), True, NUM_COLOR)
         _rect = _text.get_rect(center=self.image.get_rect().center)
         self.image.blit(_text, _rect)
 
@@ -42,7 +42,7 @@ def get_clicked_block(pos):
 
 def get_blank_block():
     for b in blocks:
-        if b.index == MODE * MODE - 1:
+        if b.no == MODE * MODE:
             return b
 
 
@@ -73,7 +73,7 @@ def draw_game_over():
 
 def init_game():
     global blocks, game_status
-    blocks = [Block(i) for i in range(MODE * MODE)]
+    blocks = [Block(i + 1) for i in range(MODE * MODE)]
     last_block = blocks.pop()
     random.shuffle(blocks)
     blocks.append(last_block)
@@ -97,7 +97,7 @@ while True:
 
     # 游戏逻辑
     if game_status == 'RUN':
-        success = all([i == block.index for i, block in enumerate(blocks)])
+        success = all([i + 1 == block.no for i, block in enumerate(blocks)])
         if success:
             game_status = 'OVER'
 
@@ -107,7 +107,7 @@ while True:
         rect = block.get_rect(i)
         screen.blit(block.image, rect)
         pg.draw.rect(screen, BG_COLOR, rect, 1)
-        if block.index == MODE * MODE - 1:
+        if block.no == MODE * MODE:
             pg.draw.rect(screen, BG_COLOR, rect, 0)
 
     if game_status == 'OVER':
