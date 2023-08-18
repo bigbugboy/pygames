@@ -1,6 +1,8 @@
+import math
 import random
 import sys
 
+import pygame
 import pygame as pg
 
 MODE = 4
@@ -46,6 +48,10 @@ def get_blank_block():
             return b
 
 
+def get_distance(first: pygame.Rect, second: pygame.Rect):
+    return int(math.sqrt((first.centerx - second.centerx) ** 2 + (first.centery - second.centery) ** 2))
+
+
 def try_swap_block(pos):
     the_block = get_clicked_block(pos)
     blank_block = get_blank_block()
@@ -56,7 +62,9 @@ def try_swap_block(pos):
     index_cb = blocks.index(the_block)
     gap = abs(index_cb - index_bb)
     if gap == 1 or gap == MODE:
-        blocks[index_cb], blocks[index_bb] = blocks[index_bb], blocks[index_cb]
+        distance = get_distance(the_block.get_rect(index_cb), blank_block.get_rect(index_bb))
+        if distance == BLOCK_SIZE:
+            blocks[index_cb], blocks[index_bb] = blocks[index_bb], blocks[index_cb]
 
 
 def draw_game_over():
