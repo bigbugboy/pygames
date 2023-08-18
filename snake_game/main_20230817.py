@@ -130,14 +130,14 @@ class Snake:
                     # 内侧方向是唯一指标
                     prev_direction = prev_block - b
                     next_direction = next_block - b
-                    if prev_direction.y == 1 and next_direction.x == -1 or prev_direction.x == -1 and next_direction.y == 1:
+                    if prev_direction == DOWN and next_direction == LEFT or prev_direction == LEFT and next_direction == DOWN:
                         screen.blit(self.body_rt, rect)
-                    elif prev_direction.x == -1 and next_direction.y == -1 or prev_direction.y == -1 and next_direction.x == -1:
+                    elif prev_direction == UP and next_direction == LEFT or prev_direction == LEFT and next_direction == UP:
                         screen.blit(self.body_rb, rect)
-                    elif prev_direction.x == 1 and next_direction.y == -1 or prev_direction.y == -1 and next_direction.x == 1:
-                        screen.blit(self.body_lb, rect)
-                    elif prev_direction.x == 1 and next_direction.y == 1 or prev_direction.y == 1 and next_direction.x == 1:
+                    elif prev_direction == RIGHT and next_direction == DOWN or prev_direction == DOWN and next_direction == RIGHT:
                         screen.blit(self.body_lt, rect)
+                    elif prev_direction == RIGHT and next_direction == UP or prev_direction == UP and next_direction == RIGHT:
+                        screen.blit(self.body_lb, rect)
 
 
 class Game:
