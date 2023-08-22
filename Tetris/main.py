@@ -25,6 +25,23 @@ COLORS = {
     'O': (212, 197, 0),
 }
 
+SPEEDS = {
+    -1: 30,
+    1: 500,
+    2: 300,
+    3: 100,
+    4: 80,
+    5: 50,
+}
+
+LEVELS = {
+    1: 0,
+    2: 5,
+    3: 500,
+    4: 5000,
+    5: 50000
+}
+
 
 class Shape:
     TYPE = ''
@@ -109,8 +126,9 @@ class Tetris:
     def __init__(self):
         self.block: typing.Optional[Shape] = None
         self.grids = [['' for _ in range(COLS)] for _ in range(ROWS)]
-        self.score = 0
         self.state = 'running'
+        self.score = 0
+        self.level = 1
 
     def draw_grids(self):
         for row in range(ROWS):
@@ -140,7 +158,7 @@ class Tetris:
     def generate_shape(self):
         shapes = [IShape, TShape, LShape, JShape, SShape, ZShape, OShape]
         shape = random.choice(shapes)
-        self.block = shape(-3, 3)       # 屏幕上方生成
+        self.block = shape(-2, 3)       # 屏幕上方生成
 
     def go_down(self):
         if self.block is None:
@@ -149,6 +167,7 @@ class Tetris:
         if self.is_intersected():
             self.block.row_in_grids -= 1
             self.freeze()
+        self.auto_adjust_cols()
 
     def is_intersected(self) -> bool:
         intersection = False
@@ -182,13 +201,28 @@ class Tetris:
                     self.grids[row_in_grids][col_in_grids] = self.block.TYPE
         self.block = None
 
+    def auto_adjust_cols(self):
+        if self.block is None:
+            return
+        for row in range(4):
+            for col in range(4):
+                index = row * 4 + col
+                if index in self.block.block:
+                    row_in_grids = row + self.block.row_in_grids
+                    col_in_grids = col + self.block.col_in_grids
+                    if col_in_grids < 0:
+                        self.block.col_in_grids -= col_in_grids
+                    elif col_in_grids > COLS - 1:
+                        self.block.col_in_grids -= (col_in_grids - COLS + 1)
+
     def rotate(self):
         if self.block is None:
             return
         old_rotation = self.block.rotation
         self.block.rotate()
-        if self.is_intersected():
-            self.block.rotation = old_rotation
+        self.auto_adjust_cols()
+        # if self.is_intersected():
+        #     self.block.rotation = old_rotation
 
     def go_side(self, dx):
         if self.block is None:
@@ -205,8 +239,22 @@ class Tetris:
         self.block.row_in_grids -= 1
         self.freeze()
 
-    def clear_rows(self):
-        pass
+    def upgrade_level(self):
+        for k, v in LEVELS.items():
+            if self.score >= v:
+                self.level = k
+
+    def clear_lines(self):
+        lines = 0
+        for row in range(1, ROWS):
+            full = False if '' in self.grids[row] else True
+            if full:
+                lines += 1
+                for i in range(row, 1, -1):
+                    for col in range(COLS):
+                        self.grids[i][col] = self.grids[i - 1][col]
+        self.score += lines ** 2
+        self.upgrade_level()
 
     def update_state(self):
         # 结束判断的条件: 产生方块的中间区域首是否被占了
@@ -225,7 +273,7 @@ clock = pygame.time.Clock()
 fps = 60
 
 GO_DOWN = pygame.USEREVENT
-pygame.time.set_timer(GO_DOWN, 800)
+pygame.time.set_timer(GO_DOWN, SPEEDS[1])
 
 
 game = Tetris()
@@ -250,7 +298,7 @@ while True:
     # 游戏逻辑
     if game.state == 'running' and game.block is None:
         game.generate_shape()
-    game.clear_rows()
+    game.clear_lines()
     game.update_state()
 
     # 画图
