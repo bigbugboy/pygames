@@ -126,6 +126,8 @@ class Tetris:
                     pygame.draw.rect(screen, COLORS[shape_type], rect, 0)
 
     def draw_block(self):
+        if self.block is None:
+            return
         for row in range(4):
             for col in range(4):
                 index = row * 4 + col
@@ -141,8 +143,6 @@ class Tetris:
         self.block = shape(-3, 3)       # 屏幕上方生成
 
     def go_down(self):
-        if self.state != 'running':
-            return
         if self.block is None:
             return
         self.block.row_in_grids += 1
@@ -177,30 +177,44 @@ class Tetris:
                 if index in self.block.block:
                     row_in_grids = row + self.block.row_in_grids
                     col_in_grids = col + self.block.col_in_grids
+                    if row_in_grids < 0:
+                        continue
                     self.grids[row_in_grids][col_in_grids] = self.block.TYPE
-        self.clear_rows()
-        self.generate_shape()
-        if self.is_intersected():
-            self.state = 'game-over'        # todo:结束逻辑有bug
+        self.block = None
 
     def rotate(self):
+        if self.block is None:
+            return
         old_rotation = self.block.rotation
         self.block.rotate()
         if self.is_intersected():
             self.block.rotation = old_rotation
 
     def go_side(self, dx):
+        if self.block is None:
+            return
         self.block.col_in_grids += dx
         if self.is_intersected():
             self.block.col_in_grids -= dx
 
     def go_space(self):
+        if self.block is None:
+            return
         while not self.is_intersected():
             self.block.row_in_grids += 1
         self.block.row_in_grids -= 1
         self.freeze()
 
     def clear_rows(self):
+        pass
+
+    def update_state(self):
+        # 结束判断的条件: 产生方块的中间区域首是否被占了
+        if self.grids[0][4] != '' or self.grids[0][5] != '':
+            self.state = 'over'
+            self.block = None
+
+    def draw_game_over(self):
         pass
 
 
@@ -223,22 +237,27 @@ while True:
             sys.exit()
         if event.type == GO_DOWN:
             game.go_down()
-        if event.type == pygame.KEYUP and event.key == pygame.K_UP:
-            game.rotate()
-        if event.type == pygame.KEYUP and event.key == pygame.K_LEFT:
-            game.go_side(-1)
-        if event.type == pygame.KEYUP and event.key == pygame.K_RIGHT:
-            game.go_side(1)
-        if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
-            game.go_space()
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_UP:
+                game.rotate()
+            if event.key == pygame.K_LEFT:
+                game.go_side(-1)
+            if event.key == pygame.K_RIGHT:
+                game.go_side(1)
+            if event.key == pygame.K_SPACE:
+                game.go_space()
 
     # 游戏逻辑
     if game.state == 'running' and game.block is None:
         game.generate_shape()
+    game.clear_rows()
+    game.update_state()
 
     # 画图
     screen.fill('white')
     game.draw_grids()
     game.draw_block()
+    if game.state == 'over':
+        game.draw_game_over()
     pygame.display.flip()
     clock.tick(fps)
