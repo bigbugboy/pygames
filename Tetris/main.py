@@ -127,10 +127,7 @@ class Tetris:
                 # 画底部落下来的方块
                 shape_type = self.grids[row][col]
                 if shape_type != '':
-                    rect.move_ip(1, 1)
-                    rect.width -= 2
-                    rect.height -= 2
-                    pygame.draw.rect(screen, COLORS[shape_type], rect, 0)
+                    pygame.draw.rect(screen, COLORS[shape_type], rect, 0, 2)
 
     def draw_block(self):
         if self.block is None:
@@ -142,7 +139,7 @@ class Tetris:
                     x = (col + self.block.col_in_grids) * GRID_SIZE + 1
                     y = (row + self.block.row_in_grids) * GRID_SIZE + 1
                     rect = pygame.Rect(x, y, GRID_SIZE - 1, GRID_SIZE - 1)
-                    pygame.draw.rect(screen, self.block.color, rect)
+                    pygame.draw.rect(screen, self.block.color, rect, 0, 2)
 
     def generate_shape(self):
         shapes = [IShape, TShape, LShape, JShape, SShape, ZShape, OShape]
@@ -270,23 +267,32 @@ class Tetris:
                         pygame.draw.rect(screen, COLORS[block.TYPE], rect, 0)
                         pygame.draw.rect(screen, 'grey', rect, 1)
 
-    def check_hold(self) -> bool:
-        if self.hold_block is None:
-            return True
-        if not self.block.hold:
-            return True
-        return False
-
     def hold(self):
-        # todo: bug
-        if self.check_hold():
-            self.block.hold = True
-            self.block.row_in_grids = -1
-            self.block.col_in_grids = 3
-            if self.hold_block:
-                self.block = self.hold_block
-            else:
-                self.generate_shape()
+        if self.block.hold:
+            return
+        self.block.hold = True
+        self.block, self.hold_block = self.hold_block, self.block
+        self.hold_block.rotation = 0
+        self.hold_block.col_in_grids = 3
+        self.hold_block.row_in_grids = -1
+
+    def draw_shadow(self):
+        if self.block is None:
+            return
+        old_row = self.block.row_in_grids
+        while not self.is_intersected():
+            self.block.row_in_grids += 1
+        shadow_row = self.block.row_in_grids - 1
+        self.block.row_in_grids = old_row
+
+        for row in range(4):
+            for col in range(4):
+                index = row * 4 + col
+                if index in self.block.block:
+                    x = (col + self.block.col_in_grids) * GRID_SIZE
+                    y = (row + shadow_row) * GRID_SIZE
+                    rect = pygame.Rect(x, y, GRID_SIZE, GRID_SIZE)
+                    pygame.draw.rect(screen, self.block.color, rect, 1, 2)
 
 
 pygame.init()
@@ -298,8 +304,13 @@ fps = 60
 GO_DOWN = pygame.USEREVENT
 pygame.time.set_timer(GO_DOWN, 500)
 
+GO_LEFT = pygame.USEREVENT + 1
+GO_RIGHT = pygame.USEREVENT + 2
+
 
 game = Tetris()
+pygame.key.set_repeat(50, 50)
+
 
 while True:
     for event in pygame.event.get():
@@ -317,33 +328,32 @@ while True:
                 game.rotate(True)
             if event.key == pygame.K_z:
                 game.rotate(False)
-            if event.key == pygame.K_LEFT:
-                game.go_side(-1)
-            if event.key == pygame.K_RIGHT:
-                game.go_side(1)
             if event.key == pygame.K_SPACE:
                 # hard drop
                 game.go_space()
             if event.key == pygame.K_c:
                 game.hold()
+            if event.key == pygame.K_LEFT:
+                game.go_side(-1)
+            if event.key == pygame.K_RIGHT:
+                game.go_side(1)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                game.go_down()
 
     # 游戏逻辑
-    # 按下down方向键soft drop, 速度相当于 fps=20,相当于定时时间的时间间隔是50毫秒
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_DOWN]:
-        if pygame.time.get_ticks() % 3 == 0:
-            game.go_down()
-
     if game.state == 'running' and game.block is None:
         game.generate_shape()
 
     game.clear_lines()
     game.update_state()
+    print(pygame.key.get_repeat())
 
     # 画图
     screen.fill((36, 35, 35))
     game.draw_grids()
     game.draw_block()
+    game.draw_shadow()
     game.draw_next_blocks()
     if game.state == 'over':
         game.draw_game_over()
