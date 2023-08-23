@@ -12,7 +12,7 @@ import pygame
 ROWS = 20
 COLS = 10
 GRID_SIZE = 30
-WIDTH = COLS * GRID_SIZE
+WIDTH = COLS * GRID_SIZE + 200
 HEIGHT = ROWS * GRID_SIZE
 
 COLORS = {
@@ -25,23 +25,6 @@ COLORS = {
     'O': (212, 197, 0),
 }
 
-SPEEDS = {
-    -1: 30,
-    1: 500,
-    2: 300,
-    3: 100,
-    4: 80,
-    5: 50,
-}
-
-LEVELS = {
-    1: 0,
-    2: 5,
-    3: 500,
-    4: 5000,
-    5: 50000
-}
-
 
 class Shape:
     TYPE = ''
@@ -52,13 +35,17 @@ class Shape:
         self.col_in_grids = col
         self.color = COLORS.get(self.TYPE)
         self.rotation = 0
+        self.hold = False
 
     @property
     def block(self):
         return self.BLOCKS[self.rotation]
 
-    def rotate(self):
-        self.rotation = (self.rotation + 1) % len(self.BLOCKS)
+    def rotate(self, clockwise: bool):
+        if clockwise:
+            self.rotation = (self.rotation + 1) % len(self.BLOCKS)
+        else:
+            self.rotation = (self.rotation - 1) % len(self.BLOCKS)
 
 
 class IShape(Shape):
@@ -129,12 +116,14 @@ class Tetris:
         self.state = 'running'
         self.score = 0
         self.level = 1
+        self.next_blocks = []
+        self.hold_block = None
 
     def draw_grids(self):
         for row in range(ROWS):
             for col in range(COLS):
-                rect = pygame.Rect(col * GRID_SIZE, row * GRID_SIZE, GRID_SIZE, GRID_SIZE)
-                pygame.draw.rect(screen, 'grey', rect, 1)
+                rect = pygame.Rect(col * GRID_SIZE + 1, row * GRID_SIZE + 1, GRID_SIZE - 1, GRID_SIZE - 1)
+                pygame.draw.rect(screen, 'black', rect, 0, 2)
                 # 画底部落下来的方块
                 shape_type = self.grids[row][col]
                 if shape_type != '':
@@ -152,13 +141,17 @@ class Tetris:
                 if index in self.block.block:
                     x = (col + self.block.col_in_grids) * GRID_SIZE + 1
                     y = (row + self.block.row_in_grids) * GRID_SIZE + 1
-                    rect = pygame.Rect(x, y, GRID_SIZE - 2, GRID_SIZE - 2)
+                    rect = pygame.Rect(x, y, GRID_SIZE - 1, GRID_SIZE - 1)
                     pygame.draw.rect(screen, self.block.color, rect)
 
     def generate_shape(self):
         shapes = [IShape, TShape, LShape, JShape, SShape, ZShape, OShape]
-        shape = random.choice(shapes)
-        self.block = shape(-2, 3)       # 屏幕上方生成
+        while len(self.next_blocks) < 4:
+            shape_class = random.choice(shapes)
+            shape = shape_class(-1, 3)      # 屏幕上方生成
+            self.next_blocks.append(shape)
+            print(1)
+        self.block = self.next_blocks.pop(0)
 
     def go_down(self):
         if self.block is None:
@@ -167,7 +160,6 @@ class Tetris:
         if self.is_intersected():
             self.block.row_in_grids -= 1
             self.freeze()
-        self.auto_adjust_cols()
 
     def is_intersected(self) -> bool:
         intersection = False
@@ -201,9 +193,11 @@ class Tetris:
                     self.grids[row_in_grids][col_in_grids] = self.block.TYPE
         self.block = None
 
-    def auto_adjust_cols(self):
+    def wall_kick(self):
         if self.block is None:
             return
+        old_row_in_grids = self.block.row_in_grids
+        old_col_in_grids = self.block.col_in_grids
         for row in range(4):
             for col in range(4):
                 index = row * 4 + col
@@ -214,15 +208,20 @@ class Tetris:
                         self.block.col_in_grids -= col_in_grids
                     elif col_in_grids > COLS - 1:
                         self.block.col_in_grids -= (col_in_grids - COLS + 1)
+        if self.is_intersected():
+            self.block.row_in_grids = old_row_in_grids
+            self.block.col_in_grids = old_col_in_grids
+            return False
+        return True
 
-    def rotate(self):
+    def rotate(self, clockwise: bool):
         if self.block is None:
             return
         old_rotation = self.block.rotation
-        self.block.rotate()
-        self.auto_adjust_cols()
-        # if self.is_intersected():
-        #     self.block.rotation = old_rotation
+        self.block.rotate(clockwise)
+        res = self.wall_kick()
+        if not res:
+            self.block.rotation = old_rotation
 
     def go_side(self, dx):
         if self.block is None:
@@ -239,11 +238,6 @@ class Tetris:
         self.block.row_in_grids -= 1
         self.freeze()
 
-    def upgrade_level(self):
-        for k, v in LEVELS.items():
-            if self.score >= v:
-                self.level = k
-
     def clear_lines(self):
         lines = 0
         for row in range(1, ROWS):
@@ -254,7 +248,6 @@ class Tetris:
                     for col in range(COLS):
                         self.grids[i][col] = self.grids[i - 1][col]
         self.score += lines ** 2
-        self.upgrade_level()
 
     def update_state(self):
         # 结束判断的条件: 产生方块的中间区域首是否被占了
@@ -265,6 +258,36 @@ class Tetris:
     def draw_game_over(self):
         pass
 
+    def draw_next_blocks(self):
+        for index, block in enumerate(self.next_blocks):
+            pos_x = 350
+            pos_y = 150 * index
+            for row in range(4):
+                for col in range(4):
+                    i = row * 4 + col
+                    if i in block.block:
+                        rect = pygame.Rect(pos_x + col * GRID_SIZE, pos_y + row * GRID_SIZE, GRID_SIZE, GRID_SIZE)
+                        pygame.draw.rect(screen, COLORS[block.TYPE], rect, 0)
+                        pygame.draw.rect(screen, 'grey', rect, 1)
+
+    def check_hold(self) -> bool:
+        if self.hold_block is None:
+            return True
+        if not self.block.hold:
+            return True
+        return False
+
+    def hold(self):
+        # todo: bug
+        if self.check_hold():
+            self.block.hold = True
+            self.block.row_in_grids = -1
+            self.block.col_in_grids = 3
+            if self.hold_block:
+                self.block = self.hold_block
+            else:
+                self.generate_shape()
+
 
 pygame.init()
 pygame.display.set_caption('俄罗斯方块/Tetris')
@@ -273,39 +296,56 @@ clock = pygame.time.Clock()
 fps = 60
 
 GO_DOWN = pygame.USEREVENT
-pygame.time.set_timer(GO_DOWN, SPEEDS[1])
+pygame.time.set_timer(GO_DOWN, 500)
 
 
 game = Tetris()
 
 while True:
     for event in pygame.event.get():
-        if event.type == pygame.QUIT or event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
+        if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if event.type == GO_DOWN:
+        if game.state == 'running' and event.type == GO_DOWN:
             game.go_down()
         if event.type == pygame.KEYUP:
+            if event.key == pygame.K_ESCAPE:
+                game.state = 'pause'
+            if event.key == pygame.K_RETURN:
+                game.state = 'running'
             if event.key == pygame.K_UP:
-                game.rotate()
+                game.rotate(True)
+            if event.key == pygame.K_z:
+                game.rotate(False)
             if event.key == pygame.K_LEFT:
                 game.go_side(-1)
             if event.key == pygame.K_RIGHT:
                 game.go_side(1)
             if event.key == pygame.K_SPACE:
+                # hard drop
                 game.go_space()
+            if event.key == pygame.K_c:
+                game.hold()
 
     # 游戏逻辑
+    # 按下down方向键soft drop, 速度相当于 fps=20,相当于定时时间的时间间隔是50毫秒
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_DOWN]:
+        if pygame.time.get_ticks() % 3 == 0:
+            game.go_down()
+
     if game.state == 'running' and game.block is None:
         game.generate_shape()
+
     game.clear_lines()
     game.update_state()
 
     # 画图
-    screen.fill('white')
+    screen.fill((36, 35, 35))
     game.draw_grids()
     game.draw_block()
+    game.draw_next_blocks()
     if game.state == 'over':
         game.draw_game_over()
     pygame.display.flip()
-    clock.tick(fps)
+    clock.tick(60)
