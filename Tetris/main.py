@@ -11,7 +11,7 @@ import pygame
 
 ROWS = 20
 COLS = 10
-GRID_SIZE = 30
+GRID_SIZE = 25
 WIDTH = COLS * GRID_SIZE + 200
 HEIGHT = ROWS * GRID_SIZE
 
@@ -29,6 +29,7 @@ COLORS = {
 class Shape:
     TYPE = ''
     BLOCKS = []
+    IMAGE = None
 
     def __init__(self, row, col):
         self.row_in_grids = row
@@ -54,6 +55,8 @@ class IShape(Shape):
         [4, 5, 6, 7],
         [2, 6, 10, 14],
     ]
+    IMAGE = pygame.image.load(f'./assets/images/mino-normal-I.png')
+    LOCKED_IMAGE = pygame.image.load(f'./assets/images/mino-locked-I.png')
 
 
 class TShape(Shape):
@@ -64,6 +67,8 @@ class TShape(Shape):
         [5, 8, 9, 10],
         [1, 5, 6, 9],
     ]
+    IMAGE = pygame.image.load(f'./assets/images/mino-normal-T.png')
+    LOCKED_IMAGE = pygame.image.load(f'./assets/images/mino-locked-T.png')
 
 
 class LShape(Shape):
@@ -74,6 +79,8 @@ class LShape(Shape):
         [6, 8, 9, 10],
         [1, 5, 9, 10],
     ]
+    IMAGE = pygame.image.load(f'./assets/images/mino-normal-L.png')
+    LOCKED_IMAGE = pygame.image.load(f'./assets/images/mino-locked-L.png')
 
 
 class JShape(Shape):
@@ -84,6 +91,8 @@ class JShape(Shape):
        [4, 8, 9, 10],
        [1, 2, 5, 9],
     ]
+    IMAGE = pygame.image.load(f'./assets/images/mino-normal-J.png')
+    LOCKED_IMAGE = pygame.image.load(f'./assets/images/mino-locked-J.png')
 
 
 class SShape(Shape):
@@ -92,6 +101,8 @@ class SShape(Shape):
         [5, 6, 8, 9],
         [0, 4, 5, 9],
     ]
+    IMAGE = pygame.image.load(f'./assets/images/mino-normal-S.png')
+    LOCKED_IMAGE = pygame.image.load(f'./assets/images/mino-locked-S.png')
 
 
 class ZShape(Shape):
@@ -100,6 +111,8 @@ class ZShape(Shape):
         [4, 5, 9, 10],
         [2, 5, 6, 9],
     ]
+    IMAGE = pygame.image.load(f'./assets/images/mino-normal-Z.png')
+    LOCKED_IMAGE = pygame.image.load(f'./assets/images/mino-locked-Z.png')
 
 
 class OShape(Shape):
@@ -107,6 +120,8 @@ class OShape(Shape):
     BLOCKS = [
         [5, 6, 9, 10],
     ]
+    IMAGE = pygame.image.load(f'./assets/images/mino-normal-O.png')
+    LOCKED_IMAGE = pygame.image.load(f'./assets/images/mino-locked-O.png')
 
 
 class Tetris:
@@ -118,6 +133,13 @@ class Tetris:
         self.level = 1
         self.next_blocks = []
         self.hold_block = None
+        self.dead_blocks = []
+
+    def get_locked_image(self, block_type):
+        shapes = [IShape, TShape, LShape, JShape, SShape, ZShape, OShape]
+        for s in shapes:
+            if block_type == s.__name__[0]:
+                return s.LOCKED_IMAGE
 
     def draw_grids(self):
         for row in range(ROWS):
@@ -127,7 +149,13 @@ class Tetris:
                 # 画底部落下来的方块
                 shape_type = self.grids[row][col]
                 if shape_type != '':
-                    pygame.draw.rect(screen, COLORS[shape_type], rect, 0, 2)
+                    # pygame.draw.rect(screen, COLORS[shape_type], rect, 0, 2)
+                    image = self.get_locked_image(shape_type)
+                    screen.blit(image, rect)
+
+    def draw_dead_blocks(self):
+        # todo: clear lines effect
+        pass
 
     def draw_block(self):
         if self.block is None:
@@ -139,7 +167,8 @@ class Tetris:
                     x = (col + self.block.col_in_grids) * GRID_SIZE + 1
                     y = (row + self.block.row_in_grids) * GRID_SIZE + 1
                     rect = pygame.Rect(x, y, GRID_SIZE - 1, GRID_SIZE - 1)
-                    pygame.draw.rect(screen, self.block.color, rect, 0, 2)
+                    screen.blit(self.block.IMAGE, rect)
+                    # pygame.draw.rect(screen, self.block.color, rect, 0, 2)
 
     def generate_shape(self):
         shapes = [IShape, TShape, LShape, JShape, SShape, ZShape, OShape]
@@ -244,6 +273,7 @@ class Tetris:
                 for i in range(row, 1, -1):
                     for col in range(COLS):
                         self.grids[i][col] = self.grids[i - 1][col]
+                        self.dead_blocks.append(self.grids[i - 1][col])
         self.score += lines ** 2
 
     def update_state(self):
@@ -309,8 +339,11 @@ GO_RIGHT = pygame.USEREVENT + 2
 
 
 game = Tetris()
-pygame.key.set_repeat(50, 50)
-
+pygame.key.set_repeat(50)
+left_repeat_counts = 0
+right_repeat_counts = 0
+sparkle = pygame.image.load('./assets/images/sparkle.png').convert_alpha()
+count = 0
 
 while True:
     for event in pygame.event.get():
@@ -334,12 +367,22 @@ while True:
             if event.key == pygame.K_c:
                 game.hold()
             if event.key == pygame.K_LEFT:
+                left_repeat_counts = 0
                 game.go_side(-1)
             if event.key == pygame.K_RIGHT:
+                right_repeat_counts = 0
                 game.go_side(1)
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_DOWN:
                 game.go_down()
+            if event.key == pygame.K_LEFT:
+                left_repeat_counts += 1
+                if left_repeat_counts >= 5:
+                    game.go_side(-1)
+            if event.key == pygame.K_RIGHT:
+                right_repeat_counts += 1
+                if right_repeat_counts >= 5:
+                    game.go_side(1)
 
     # 游戏逻辑
     if game.state == 'running' and game.block is None:
@@ -347,11 +390,11 @@ while True:
 
     game.clear_lines()
     game.update_state()
-    print(pygame.key.get_repeat())
 
     # 画图
     screen.fill((36, 35, 35))
     game.draw_grids()
+    game.draw_dead_blocks()
     game.draw_block()
     game.draw_shadow()
     game.draw_next_blocks()
